@@ -1,10 +1,6 @@
-use std::collections::HashMap;
-
-use dot_vox::{Color, DotVoxData, Model, Voxel};
+use dot_vox::DotVoxData;
 
 use crate::{one_to_three, scale2x::three_to_one};
-
-const RGBA_SIZE: usize = 4;
 
 pub fn flatten_vox_model(vox_data: &DotVoxData) -> Vec<Vec<[u8; 4]>> {
     let mut result = Vec::new();

@@ -1,16 +1,8 @@
-//! Pixel Art rotation algorithms that works with many types of pixel buffers.
+//! voxel Art rotation algorithms that works with many types of voxel buffers.
 //!
-//! This library allows you to rotate pixel art using the [rotsprite](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite) algorithm.
+//! This library allows you to rotate voxel art using the [rotsprite](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite) algorithm.
 //!
-//! # Feature Flags
-//!
-//! ## `blit`
-//!
-//! Implement the [`crate::RotSprite`] trait for [`blit::BlitBuffer`], making it easy to get a rotated copy of a blit buffer.
 
-// Make the modules public for benchmarks but don't document it
-#[cfg(feature = "blit")]
-mod blit;
 #[doc(hidden)]
 pub mod flatten_vox;
 #[doc(hidden)]
@@ -113,8 +105,13 @@ where
     );
 
     // Downscale back to original resolution
-    let (out_width, out_height, out_depth, out) =
-        downscale(&rotated, rotated_width, rotated_height, rotated_depth, DOWN_SCALE_FACTOR);
+    let (out_width, out_height, out_depth, out) = downscale(
+        &rotated,
+        rotated_width,
+        rotated_height,
+        rotated_depth,
+        DOWN_SCALE_FACTOR,
+    );
 
     Ok((out_width, out_height, out_depth, out))
 }

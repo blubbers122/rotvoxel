@@ -10,33 +10,6 @@ pub fn one_to_three(index: usize, width: usize, height: usize) -> (usize, usize,
     (x, y, z)
 }
 
-/**
- * Get the indices of the neighbors of a voxel
- *
- * @param x The x coordinate of the voxel
- * @param y The y coordinate of the voxel
- * @param z The z coordinate of the voxel
- * @param width The width of the voxel buffer
- * @param height The height of the voxel buffer
- * @return A tuple of the indices of the neighbors in the order: center, up, left, down, right, forward, back
- */
-fn get_neighbor_indices(
-    x: usize,
-    y: usize,
-    z: usize,
-    width: usize,
-    height: usize,
-    depth: usize,
-) -> (usize, usize, usize, usize, usize, usize, usize) {
-    let center = three_to_one(x, y, z, width, height);
-    let up = three_to_one(x, y.saturating_sub(1), z, width, height);
-    let left = three_to_one(x.saturating_sub(1), y, z, width, height);
-    let down = three_to_one(x, (y + 1).min(height - 1), z, width, height);
-    let right = three_to_one((x + 1).min(width - 1), y, z, width, height);
-    let forward = three_to_one(x, y, (z + 1).min(depth - 1), width, height);
-    let back = three_to_one(x, y, z.saturating_sub(1), width, height);
-    (center, up, left, down, right, forward, back)
-}
 
 // Algorithm for fast upscaling of voxel art
 pub fn scale2x<P>(

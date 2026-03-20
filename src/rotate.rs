@@ -1,10 +1,3 @@
-use std::f64;
-
-pub enum Axis {
-    X,
-    Y,
-    Z,
-}
 
 // Algorithm for rotating the image
 #[multiversion::multiversion(targets("x86_64+sse3", "x86_64+sse3+avx", "x86_64+sse3+avx2"))]

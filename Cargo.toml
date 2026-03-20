@@ -8,7 +8,7 @@ readme = "README.md"
 repository = "https://github.com/tversteeg/rotsprite"
 documentation = "https://docs.rs/rotsprite"
 description = "Rotate voxel models using the rotsprite algorithm"
-keywords = ["game", "voxel", "blit", "rotation"]
+keywords = ["game", "voxel", "rotation"]
 categories = ["rendering", "game-engines"]
 
 [features]
