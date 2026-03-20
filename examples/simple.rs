@@ -1,64 +1,19 @@
-use std::collections::HashMap;
-
-use dot_vox::{DotVoxData, Model, Voxel};
-use rotvoxel::{flatten_vox_model, flattened_voxels_colors_to_voxels, rotvoxel};
+use rotvoxel::rotvoxel_dotvox;
 
 fn main() {
-    // Open the image
-    // let img = image::open("examples/threeforms.png").unwrap();
     let vox_data = dot_vox::load("examples/chr_knight.vox").unwrap();
-    let model = &vox_data.models[0];
-    let width = model.size.x as usize;
-    let height = model.size.y as usize;
-    let depth = model.size.z as usize;
-    let pixels = flatten_vox_model(&vox_data)[0].clone();
+    let rotation_angle: f64 = 45.0;
 
-    let unfound_color = [0u8; 4];
-    let rotation_angle: f64 = 45.0; //Rotate in increments of 15 degrees
-    let (rotated_width, rotated_height, rotated_depth, rotated) = rotvoxel(
-        &pixels,
-        &unfound_color, // The color for pixels that couldn't be found
-        width,
-        height,
-        depth,
-        0.0,
-        0.0,
-        rotation_angle,
+    let rotated_vox = rotvoxel_dotvox(
+        &vox_data,
+        0,               // model index
+        0.0,             // rot_x
+        0.0,             // rot_y
+        rotation_angle,  // rot_z
+        None,            // scale_passes (default = 3 = 8x)
     )
-    .expect("Could not rotate sprite");
-
-    let unflattened = flattened_voxels_colors_to_voxels(&rotated, rotated_width, rotated_height);
-
-    let mut color_to_pallete_index = HashMap::new();
-    for (i, color) in vox_data.palette.iter().enumerate() {
-        let color_array = [color.r, color.g, color.b, color.a];
-        color_to_pallete_index.insert(color_array, i as u8);
-    }
-
-    let new_rotated_model = Model {
-        voxels: unflattened
-            .iter()
-            .map(|v| Voxel {
-                x: v.x as u8,
-                y: v.y as u8,
-                z: v.z as u8,
-                i: *color_to_pallete_index
-                    .get(&v.color)
-                    .expect("Could not find color in palette"),
-            })
-            .collect(),
-        size: dot_vox::Size {
-            x: rotated_width as u32,
-            y: rotated_height as u32,
-            z: rotated_depth as u32,
-        },
-    };
-
-    let new_rotated_vox = DotVoxData {
-        models: vec![new_rotated_model],
-        ..vox_data
-    };
+    .expect("Could not rotate voxel model");
 
     let mut writer = std::fs::File::create("rotated.vox").unwrap();
-    new_rotated_vox.write_vox(&mut writer).unwrap();
+    rotated_vox.write_vox(&mut writer).unwrap();
 }

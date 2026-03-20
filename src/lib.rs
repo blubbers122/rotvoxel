@@ -1,7 +1,6 @@
-//! voxel Art rotation algorithms that works with many types of voxel buffers.
+//! Voxel Art rotation algorithms that works with many types of voxel buffers.
 //!
 //! This library allows you to rotate voxel art using the [rotsprite](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite) algorithm.
-//!
 
 #[doc(hidden)]
 pub mod flatten_vox;
@@ -13,7 +12,10 @@ pub mod scale2x;
 pub use crate::flatten_vox::*;
 pub use crate::rotate::*;
 pub use crate::scale2x::*;
+use std::collections::HashMap;
 use thiserror::Error;
+
+use dot_vox::{DotVoxData, Model, Voxel};
 
 #[derive(Error, Debug, PartialEq)]
 pub enum Error {
@@ -21,28 +23,20 @@ pub enum Error {
     ImageSizeMismatch,
 }
 
-/// Expose `rotsprite` method on some image types.
-pub trait Rotsprite<P>
-where
-    P: Clone + Eq,
-{
-    /// Clone and rotate a sprite.
-    ///
-    /// Rotation is in degrees (0-360).
-    /// The size of the resulting vector will be bigger if the rotation isn't exactly 0.0, 90.0, 180.0 or 270.0 degrees.
-    /// The width and the height will be swapped at angles of 90.0 and 270.0.
-    fn rotsprite(&self, rotation: f64) -> Result<Self, Error>
-    where
-        Self: Sized;
-}
+/// Default number of Scale2x passes (3 passes = 8x upscale).
+const DEFAULT_SCALE_PASSES: u32 = 3;
 
-const DOWN_SCALE_FACTOR: usize = 8;
-
-/// Rotate a sprite based on any pixel format implementing the `Eq` and `Clone` traits.
+/// Rotate a voxel buffer using the rotsprite algorithm.
 ///
-/// Rotation is in degrees (0-360).
-/// The size of the resulting vector will be bigger if the rotation isn't exactly 0.0, 90.0, 180.0 or 270.0 degrees.
-/// The width and the height will be swapped at angles of 90.0 and 270.0.
+/// Upscales the buffer using Scale2x, rotates at the higher resolution,
+/// then downscales back. This produces smoother edges than naive rotation.
+///
+/// - `buf`: flat voxel buffer in (x, y, z) order
+/// - `empty_color`: the "empty" voxel value (e.g. transparent)
+/// - `width`, `height`, `depth`: dimensions of the voxel buffer
+/// - `rot_x`, `rot_y`, `rot_z`: rotation angles in degrees
+/// - `scale_passes`: number of Scale2x passes (each pass doubles resolution).
+///   Use `None` for the default (3 passes = 8x). 2 passes = 4x is faster with slightly less smoothing.
 #[multiversion::multiversion(
     targets("x86_64+sse3", "x86_64+sse3+avx", "x86_64+sse3+avx2"),
     dispatcher = "static"
@@ -56,6 +50,7 @@ pub fn rotvoxel<P>(
     rot_x: f64,
     rot_y: f64,
     rot_z: f64,
+    scale_passes: Option<u32>,
 ) -> Result<(usize, usize, usize, Vec<P>), Error>
 where
     P: Eq + Clone,
@@ -70,118 +65,146 @@ where
         return Err(Error::ImageSizeMismatch);
     }
 
-    // Upscale the image using the scale2x algorithm
-    // 2x
-    let (scaled_width, scaled_height, scaled_depth, scaled) =
-        scale2x(buf, width, height, depth, empty_color);
-    // 4x
-    let (scaled_width, scaled_height, scaled_depth, scaled) = scale2x(
-        &scaled,
-        scaled_width,
-        scaled_height,
-        scaled_depth,
-        empty_color,
-    );
-    // 8x
-    let (scaled_width, scaled_height, scaled_depth, scaled) = scale2x(
-        &scaled,
-        scaled_width,
-        scaled_height,
-        scaled_depth,
-        empty_color,
-    );
+    let passes = scale_passes.unwrap_or(DEFAULT_SCALE_PASSES);
+    let down_scale_factor = 1 << passes; // 2^passes
 
-    // Rotate the upscaled image
+    // Upscale using the scale2x algorithm
+    let (mut sw, mut sh, mut sd, mut scaled) = (width, height, depth, buf.to_vec());
+    for _ in 0..passes {
+        let result = scale2x(&scaled, sw, sh, sd, empty_color);
+        sw = result.0;
+        sh = result.1;
+        sd = result.2;
+        scaled = result.3;
+    }
+
+    // Rotate the upscaled model
     let (rotated_width, rotated_height, rotated_depth, rotated) = rotate(
         &scaled,
         empty_color,
-        scaled_width,
-        scaled_height,
-        scaled_depth,
+        sw,
+        sh,
+        sd,
         rot_x,
         rot_y,
         rot_z,
-        DOWN_SCALE_FACTOR,
+        down_scale_factor,
     );
 
-    // Downscale back to original resolution
+    // Downscale back to approximately original resolution
     let (out_width, out_height, out_depth, out) = downscale(
         &rotated,
         rotated_width,
         rotated_height,
         rotated_depth,
-        DOWN_SCALE_FACTOR,
+        down_scale_factor,
     );
 
     Ok((out_width, out_height, out_depth, out))
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+/// Rotate a DotVox model and return a new DotVoxData.
+///
+/// This is a convenience function that handles the flatten/unflatten/palette
+/// boilerplate for working with .vox files directly.
+///
+/// - `vox_data`: the loaded DotVoxData
+/// - `model_index`: which model to rotate (usually 0)
+/// - `rot_x`, `rot_y`, `rot_z`: rotation angles in degrees
+/// - `scale_passes`: number of Scale2x passes (None = default 3 = 8x upscale)
+pub fn rotvoxel_dotvox(
+    vox_data: &DotVoxData,
+    model_index: usize,
+    rot_x: f64,
+    rot_y: f64,
+    rot_z: f64,
+    scale_passes: Option<u32>,
+) -> Result<DotVoxData, Error> {
+    let model = &vox_data.models[model_index];
+    let width = model.size.x as usize;
+    let height = model.size.y as usize;
+    let depth = model.size.z as usize;
+    let pixels = flatten_vox_model(vox_data)[model_index].clone();
 
-//     #[test]
-//     fn rotation_equality() -> Result<(), Error> {
-//         let buf = [1, 2, 3, 4, 5, 6].to_vec();
-//         assert_eq!(
-//             rotsprite(&buf, &0, 3, 45.0)?,
-//             rotsprite(&buf, &0, 3, 45.0 + 360.0)?
-//         );
-//         assert_eq!(
-//             rotsprite(&buf, &0, 3, 45.0)?,
-//             rotsprite(&buf, &0, 3, 45.0 - 360.0)?
-//         );
-//         assert_eq!(
-//             rotsprite(&buf, &0, 3, 12.0)?,
-//             rotsprite(&buf, &0, 3, 12.0 - 360.0)?
-//         );
+    let empty_color = [0u8; 4];
+    let (rotated_width, rotated_height, rotated_depth, rotated) = rotvoxel(
+        &pixels,
+        &empty_color,
+        width,
+        height,
+        depth,
+        rot_x,
+        rot_y,
+        rot_z,
+        scale_passes,
+    )?;
 
-//         Ok(())
-//     }
+    let unflattened = flattened_voxels_colors_to_voxels(&rotated, rotated_width, rotated_height);
 
-//     #[test]
-//     fn rotation_size() -> Result<(), Error> {
-//         let buf = [1, 2, 3, 4, 5, 6].to_vec();
-//         let (w, h, _) = rotsprite(&buf, &0, 3, 45.0)?;
-//         assert_eq!(w, 4);
-//         assert_eq!(h, 4);
-//         let (w, h, _) = rotsprite(&buf, &0, 3, 90.0)?;
-//         assert_eq!(w, 2);
-//         assert_eq!(h, 3);
-//         let (w, h, _) = rotsprite(&buf, &0, 3, 180.0)?;
-//         assert_eq!(w, 3);
-//         assert_eq!(h, 2);
+    // Build a reverse palette lookup
+    let mut color_to_palette_index = HashMap::new();
+    for (i, color) in vox_data.palette.iter().enumerate() {
+        let color_array = [color.r, color.g, color.b, color.a];
+        color_to_palette_index.insert(color_array, i as u8);
+    }
 
-//         Ok(())
-//     }
+    let new_model = Model {
+        voxels: unflattened
+            .iter()
+            .filter_map(|v| {
+                color_to_palette_index.get(&v.color).map(|&i| Voxel {
+                    x: v.x as u8,
+                    y: v.y as u8,
+                    z: v.z as u8,
+                    i,
+                })
+            })
+            .collect(),
+        size: dot_vox::Size {
+            x: rotated_width as u32,
+            y: rotated_height as u32,
+            z: rotated_depth as u32,
+        },
+    };
 
-//     #[test]
-//     fn rotation_test() -> Result<(), Error> {
-//         let buf = [1, 2, 3, 4, 5, 6].to_vec();
-//         let (w, h, new) = rotsprite(&buf, &0, 3, 90.0)?;
-//         assert_eq!(w, 2);
-//         assert_eq!(h, 3);
-//         assert_eq!(new, [4, 1, 5, 2, 6, 3]);
+    Ok(DotVoxData {
+        version: vox_data.version,
+        index_map: vox_data.index_map.clone(),
+        models: vec![new_model],
+        palette: vox_data.palette.clone(),
+        materials: vox_data.materials.clone(),
+        scenes: vox_data.scenes.clone(),
+        layers: vox_data.layers.clone(),
+    })
+}
 
-//         Ok(())
-//     }
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn no_rotation_test() -> Result<(), Error> {
-//         let buf = [1, 0, 0, 1, 1, 0].to_vec();
-//         let (w, h, new) = rotsprite(&buf, &-1, 2, 0.0)?;
-//         assert_eq!(w, 2);
-//         assert_eq!(h, 3);
-//         assert_eq!(buf, new);
+    #[test]
+    fn no_rotation_returns_original() -> Result<(), Error> {
+        let buf = vec![1, 2, 3, 4, 5, 6, 7, 8];
+        let (w, h, d, result) = rotvoxel(&buf, &0, 2, 2, 2, 0.0, 0.0, 0.0, None)?;
+        assert_eq!((w, h, d), (2, 2, 2));
+        assert_eq!(result, buf);
+        Ok(())
+    }
 
-//         Ok(())
-//     }
+    #[test]
+    fn size_mismatch_error() {
+        assert_eq!(
+            rotvoxel(&[0, 0, 0, 0, 0], &0, 2, 2, 2, 1.0, 0.0, 0.0, None).unwrap_err(),
+            Error::ImageSizeMismatch
+        );
+    }
 
-//     #[test]
-//     fn size_mismatch_error_test() {
-//         assert_eq!(
-//             rotsprite(&[0, 0, 0, 0, 0], &-1, 2, 1.0).unwrap_err(),
-//             Error::ImageSizeMismatch
-//         );
-//     }
-// }
+    #[test]
+    fn custom_scale_passes() -> Result<(), Error> {
+        // 2 passes = 4x upscale — should still work
+        let buf = vec![1; 8]; // 2x2x2
+        let (w, h, d, _result) = rotvoxel(&buf, &0, 2, 2, 2, 45.0, 0.0, 0.0, Some(2))?;
+        assert!(w > 0 && h > 0 && d > 0);
+        Ok(())
+    }
+}

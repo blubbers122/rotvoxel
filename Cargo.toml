@@ -1,12 +1,12 @@
 [package]
 name = "rotvoxel"
 version = "0.1.4"
-authors = ["Thomas Versteeg <thomasversteeg@gmx.com>"]
+authors = ["Brock Lubbers <[EMAIL_ADDRESS]>"]
 license = "AGPL-3.0-or-later"
 edition = "2021"
 readme = "README.md"
-repository = "https://github.com/tversteeg/rotsprite"
-documentation = "https://docs.rs/rotsprite"
+repository = "https://github.com/blubbers122/rotvoxel"
+documentation = "https://docs.rs/rotvoxel"
 description = "Rotate voxel models using the rotsprite algorithm"
 keywords = ["game", "voxel", "rotation"]
 categories = ["rendering", "game-engines"]

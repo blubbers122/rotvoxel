@@ -15,7 +15,6 @@ Voxel Art rotation algorithms that works with many types of voxel buffers.
 This library allows you to rotate voxel art using the [rotsprite](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite) algorithm.
 
 
-
 #### Local
 
 ```console

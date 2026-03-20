@@ -10,7 +10,6 @@ pub fn one_to_three(index: usize, width: usize, height: usize) -> (usize, usize,
     (x, y, z)
 }
 
-
 // Algorithm for fast upscaling of voxel art
 pub fn scale2x<P>(
     buf: &[P],
@@ -49,556 +48,6 @@ where
             }
         }
     }
-    // it is TUBE time
-    // in here, only z changes. so now we can just create a 'cornerless tube' growing along the z axis
-    // for z in 1..depth - 1 {
-    //     for x in 1..width - 1 {
-    //         // tube faces where y == 0 or y == height - 1
-    //         let y = height - 1;
-    //         let (center, up, left, down, right, forward, back) =
-    //             get_neighbor_indices(x, y, z, width, height);
-    //         apply_scale2x_block(
-    //             &mut scaled,
-    //             three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //             width2,
-    //             height2,
-    //             (
-    //                 // Center
-    //                 &buf[center],
-    //                 // Up
-    //                 &buf[up],
-    //                 // Left
-    //                 &buf[left],
-    //                 // Down
-    //                 &buf[center],
-    //                 // Right
-    //                 &buf[right],
-    //                 // Forward
-    //                 &buf[forward],
-    //                 // Back
-    //                 &buf[back],
-    //             ),
-    //         );
-
-    //         let y = 0;
-    //         let (center, up, left, down, right, forward, back) =
-    //             get_neighbor_indices(x, y, z, width, height);
-    //         apply_scale2x_block(
-    //             &mut scaled,
-    //             three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //             width2,
-    //             height2,
-    //             (
-    //                 // Center
-    //                 &buf[center],
-    //                 // Up
-    //                 &buf[center],
-    //                 // Left
-    //                 &buf[left],
-    //                 // Down
-    //                 &buf[down],
-    //                 // Right
-    //                 &buf[right],
-    //                 // Forward
-    //                 &buf[forward],
-    //                 // Back
-    //                 &buf[back],
-    //             ),
-    //         );
-    //     }
-
-    //     for y in 1..height - 1 {
-    //         // tube faces where x == 0 or x == width - 1
-    //         let x = width - 1;
-    //         let (center, up, left, down, right, forward, back) =
-    //             get_neighbor_indices(x, y, z, width, height);
-    //         apply_scale2x_block(
-    //             &mut scaled,
-    //             three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //             width2,
-    //             height2,
-    //             (
-    //                 // Center
-    //                 &buf[center],
-    //                 // Up
-    //                 &buf[up],
-    //                 // Left
-    //                 &buf[left],
-    //                 // Down
-    //                 &buf[down],
-    //                 // Right
-    //                 &buf[center],
-    //                 // Forward
-    //                 &buf[forward],
-    //                 // Back
-    //                 &buf[back],
-    //             ),
-    //         );
-
-    //         let x = 0;
-    //         let (center, up, left, down, right, forward, back) =
-    //             get_neighbor_indices(x, y, z, width, height);
-    //         apply_scale2x_block(
-    //             &mut scaled,
-    //             three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //             width2,
-    //             height2,
-    //             (
-    //                 // Center
-    //                 &buf[center],
-    //                 // Up
-    //                 &buf[up],
-    //                 // Left
-    //                 &buf[center],
-    //                 // Down
-    //                 &buf[down],
-    //                 // Right
-    //                 &buf[right],
-    //                 // Forward
-    //                 &buf[forward],
-    //                 // Back
-    //                 &buf[back],
-    //             ),
-    //         );
-    //     }
-    // }
-
-    // // the other 2 faces of the 'cube shell' started in the last nested loop
-    // for x in 1..width - 1 {
-    //     for y in 1..height - 1 {
-    //         // tube faces where z == 0 or z == depth - 1
-    //         let z = depth - 1;
-    //         let (center, up, left, down, right, forward, back) =
-    //             get_neighbor_indices(x, y, z, width, height);
-    //         apply_scale2x_block(
-    //             &mut scaled,
-    //             three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //             width2,
-    //             height2,
-    //             (
-    //                 // Center
-    //                 &buf[center],
-    //                 // Up
-    //                 &buf[up],
-    //                 // Left
-    //                 &buf[left],
-    //                 // Down
-    //                 &buf[down],
-    //                 // Right
-    //                 &buf[right],
-    //                 // Forward
-    //                 &buf[center],
-    //                 // Back
-    //                 &buf[back],
-    //             ),
-    //         );
-
-    //         let z = 0;
-    //         let (center, up, left, down, right, forward, back) =
-    //             get_neighbor_indices(x, y, z, width, height);
-    //         apply_scale2x_block(
-    //             &mut scaled,
-    //             three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //             width2,
-    //             height2,
-    //             (
-    //                 // Center
-    //                 &buf[center],
-    //                 // Up
-    //                 &buf[up],
-    //                 // Left
-    //                 &buf[left],
-    //                 // Down
-    //                 &buf[down],
-    //                 // Right
-    //                 &buf[right],
-    //                 // Forward
-    //                 &buf[forward],
-    //                 // Back
-    //                 &buf[center],
-    //             ),
-    //         );
-    //     }
-    // }
-
-    // // then, we apply the 12 corner strips
-
-    // // the 4 strips where only z changes
-    // for z in 1..depth - 1 {
-    //     let x = width - 1;
-    //     let y = height - 1;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't got right or down
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[center],
-    //             // Right
-    //             &buf[center],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let x = 0;
-    //     let y = height - 1;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go left or down
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[center],
-    //             // Down
-    //             &buf[center],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let x = 0;
-    //     let y = 0;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go left or up
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[center],
-    //             // Left
-    //             &buf[center],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let x = width - 1;
-    //     let y = 0;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go right or up
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[center],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[center],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-    // }
-
-    // // the 4 strips where only y changes
-    // for y in 1..height - 1 {
-    //     let x = width - 1;
-    //     let z = depth - 1;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go forward or right
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[center],
-    //             // Forward
-    //             &buf[center],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let x = 0;
-    //     let z = depth - 1;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go left or forward
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[center],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[center],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let x = 0;
-    //     let z = 0;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go left or back
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[center],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[center],
-    //         ),
-    //     );
-
-    //     let x = width - 1;
-    //     let z = 0;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go right or back
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[center],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[center],
-    //         ),
-    //     );
-    // }
-
-    // // the 4 strips where only x changes
-    // for x in 1..width - 1 {
-    //     let y = height - 1;
-    //     let z = depth - 1;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go forward or down
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[center],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[center],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let y = 0;
-    //     let z = depth - 1;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go up or forward
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[center],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[center],
-    //             // Back
-    //             &buf[back],
-    //         ),
-    //     );
-
-    //     let y = 0;
-    //     let z = 0;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go up or back
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[center],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[down],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[center],
-    //         ),
-    //     );
-
-    //     let y = height - 1;
-    //     let z = 0;
-    //     let (center, up, left, down, right, forward, back) =
-    //         get_neighbor_indices(x, y, z, width, height);
-    //     // we can't go down or back
-    //     apply_scale2x_block(
-    //         &mut scaled,
-    //         three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //         width2,
-    //         height2,
-    //         (
-    //             // Center
-    //             &buf[center],
-    //             // Up
-    //             &buf[up],
-    //             // Left
-    //             &buf[left],
-    //             // Down
-    //             &buf[center],
-    //             // Right
-    //             &buf[right],
-    //             // Forward
-    //             &buf[forward],
-    //             // Back
-    //             &buf[center],
-    //         ),
-    //     );
-    // }
-
-    // lastly, we apply the 8 corner voxels
-    // for x in [0, width - 1] {
-    //     for y in [0, height - 1] {
-    //         for z in [0, depth - 1] {
-    //             let (center, up, left, down, right, forward, back) =
-    //                 get_neighbor_indices(x, y, z, width, height);
-    //             apply_scale2x_block(
-    //                 &mut scaled,
-    //                 three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
-    //                 width2,
-    //                 height2,
-    //                 (
-    //                     // Center
-    //                     &buf[center],
-    //                     // Up
-    //                     &buf[up],
-    //                     // Left
-    //                     &buf[left],
-    //                     // Down
-    //                     &buf[down],
-    //                     // Right
-    //                     &buf[right],
-    //                     // Forward
-    //                     &buf[forward],
-    //                     // Back
-    //                     &buf[back],
-    //                 ),
-    //             );
-    //         }
-    //     }
-    // }
 
     (width2, height2, depth2, scaled)
 }
@@ -617,21 +66,13 @@ fn apply_scale2x_block<P>(
     let block_pixels = calculate_scale2x_block(
         pixels.0, pixels.1, pixels.2, pixels.3, pixels.4, pixels.5, pixels.6,
     );
-    // center
     scaled[pos] = block_pixels.0;
-    // right
     scaled[pos + 1] = block_pixels.1;
-    // down
     scaled[pos + width] = block_pixels.2;
-    // down right
     scaled[pos + width + 1] = block_pixels.3;
-    // forward
     scaled[pos + width * height] = block_pixels.4;
-    // forward right
     scaled[pos + width * height + 1] = block_pixels.5;
-    // forward down
     scaled[pos + width * height + width] = block_pixels.6;
-    // forward down right
     scaled[pos + width * height + width + 1] = block_pixels.7;
 }
 
@@ -660,15 +101,10 @@ fn calculate_scale2x_block<P>(
 where
     P: Eq + Clone,
 {
-    // For each corner, nx/ny/nz are the toward-neighbors, ox/oy/oz are away-neighbors.
-    // Check XY, XZ, YZ planes independently using the Scale2x rule.
     #[inline(always)]
     fn corner<P: Eq + Clone>(nx: &P, ny: &P, nz: &P, ox: &P, oy: &P, oz: &P, c: &P) -> P {
-        // XY plane: nx == ny && ny != oy && nx != ox
         if nx == ny && ny != oy && nx != ox { return nx.clone(); }
-        // XZ plane: nx == nz && nz != oz && nx != ox
         if nx == nz && nz != oz && nx != ox { return nx.clone(); }
-        // YZ plane: ny == nz && nz != oz && ny != oy
         if ny == nz && nz != oz && ny != oy { return ny.clone(); }
         c.clone()
     }
@@ -676,53 +112,68 @@ where
     let c = center;
 
     (
-        // (0,0,0): toward left,up,back — away right,down,forward
         corner(left, up, back, right, down, forward, c),
-        // (1,0,0): toward right,up,back — away left,down,forward
         corner(right, up, back, left, down, forward, c),
-        // (0,1,0): toward left,down,back — away right,up,forward
         corner(left, down, back, right, up, forward, c),
-        // (1,1,0): toward right,down,back — away left,up,forward
         corner(right, down, back, left, up, forward, c),
-        // (0,0,1): toward left,up,forward — away right,down,back
         corner(left, up, forward, right, down, back, c),
-        // (1,0,1): toward right,up,forward — away left,down,back
         corner(right, up, forward, left, down, back, c),
-        // (0,1,1): toward left,down,forward — away right,up,back
         corner(left, down, forward, right, up, back, c),
-        // (1,1,1): toward right,down,forward — away left,up,back
         corner(right, down, forward, left, up, back, c),
     )
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-//     #[test]
-//     fn scale2x_test() {
-//         let buf = [1, 2, 3, 4];
-//         let (w, h, new) = scale2x(&buf, 2, 2);
-//         assert_eq!(w, 4);
-//         assert_eq!(h, 4);
-//         assert_eq!(new, [1, 1, 2, 2, 1, 1, 2, 2, 3, 3, 4, 4, 3, 3, 4, 4]);
+    #[test]
+    fn scale2x_uniform_1x1x1() {
+        let buf = vec![1];
+        let (w, h, d, result) = scale2x(&buf, 1, 1, 1, &0);
+        assert_eq!((w, h, d), (2, 2, 2));
+        assert_eq!(result, vec![1; 8]);
+    }
 
-//         let buf = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-//         let (_, _, new) = scale2x(&buf, 3, 3);
-//         let mut cmp = Vec::<usize>::new();
-//         cmp.extend([1, 1, 2, 2, 3, 3].iter());
-//         cmp.extend([1, 1, 2, 2, 3, 3].iter());
-//         cmp.extend([4, 4, 5, 5, 6, 6].iter());
-//         cmp.extend([4, 4, 5, 5, 6, 6].iter());
-//         cmp.extend([7, 7, 8, 8, 9, 9].iter());
-//         cmp.extend([7, 7, 8, 8, 9, 9].iter());
-//         assert_eq!(new, cmp);
+    #[test]
+    fn scale2x_uniform_2x2x2() {
+        let buf = vec![5; 8];
+        let (w, h, d, result) = scale2x(&buf, 2, 2, 2, &0);
+        assert_eq!((w, h, d), (4, 4, 4));
+        assert!(result.iter().all(|&v| v == 5));
+    }
 
-//         let buf = [1, 2, 3, 4, 5, 6];
-//         let (_, _, new) = scale2x(&buf, 3, 2);
-//         assert_eq!(
-//             new,
-//             [1, 1, 2, 2, 3, 3, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 4, 4, 5, 5, 6, 6]
-//         );
-//     }
-// }
+    #[test]
+    fn scale2x_preserves_dimensions() {
+        let buf = vec![0; 3 * 2 * 2];
+        let (w, h, d, result) = scale2x(&buf, 3, 2, 2, &0);
+        assert_eq!((w, h, d), (6, 4, 4));
+        assert_eq!(result.len(), 6 * 4 * 4);
+    }
+
+    #[test]
+    fn scale2x_single_voxel_in_empty() {
+        let mut buf = vec![0; 27]; // 3x3x3
+        buf[three_to_one(1, 1, 1, 3, 3)] = 1;
+        let (w, h, d, result) = scale2x(&buf, 3, 3, 3, &0);
+        assert_eq!((w, h, d), (6, 6, 6));
+        for dz in 0..2 {
+            for dy in 0..2 {
+                for dx in 0..2 {
+                    let idx = three_to_one(2 + dx, 2 + dy, 2 + dz, 6, 6);
+                    assert_eq!(result[idx], 1, "at ({}, {}, {})", 2 + dx, 2 + dy, 2 + dz);
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn scale2x_edge_smoothing() {
+        let mut buf = vec![0; 27]; // 3x3x3
+        buf[three_to_one(1, 1, 1, 3, 3)] = 1;
+        buf[three_to_one(2, 1, 1, 3, 3)] = 1;
+        let (_w, _h, _d, result) = scale2x(&buf, 3, 3, 3, &0);
+        let filled: usize = result.iter().filter(|&&v| v == 1).count();
+        assert!(filled >= 16, "expected >= 16 filled, got {}", filled);
+    }
+}
