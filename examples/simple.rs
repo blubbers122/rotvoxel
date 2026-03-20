@@ -42,7 +42,9 @@ fn main() {
                 x: v.x as u8,
                 y: v.y as u8,
                 z: v.z as u8,
-                i: *color_to_pallete_index.get(&v.color).expect("Could not find color in palette"),
+                i: *color_to_pallete_index
+                    .get(&v.color)
+                    .expect("Could not find color in palette"),
             })
             .collect(),
         size: dot_vox::Size {

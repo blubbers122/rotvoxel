@@ -80,13 +80,24 @@ where
 
     // Upscale the image using the scale2x algorithm
     // 2x
-    let (scaled_width, scaled_height, scaled_depth, scaled) = scale2x(buf, width, height, depth);
+    let (scaled_width, scaled_height, scaled_depth, scaled) =
+        scale2x(buf, width, height, depth, empty_color);
     // 4x
-    let (scaled_width, scaled_height, scaled_depth, scaled) =
-        scale2x(&scaled, scaled_width, scaled_height, scaled_depth);
+    let (scaled_width, scaled_height, scaled_depth, scaled) = scale2x(
+        &scaled,
+        scaled_width,
+        scaled_height,
+        scaled_depth,
+        empty_color,
+    );
     // 8x
-    let (scaled_width, scaled_height, scaled_depth, scaled) =
-        scale2x(&scaled, scaled_width, scaled_height, scaled_depth);
+    let (scaled_width, scaled_height, scaled_depth, scaled) = scale2x(
+        &scaled,
+        scaled_width,
+        scaled_height,
+        scaled_depth,
+        empty_color,
+    );
 
     // Rotate the upscaled image
     let (rotated_width, rotated_height, rotated_depth, rotated) = rotate(
@@ -102,10 +113,10 @@ where
     );
 
     // Downscale back to original resolution
-    // let (out_width, out_height, out_depth, out) =
-    //     downscale(&rotated, rotated_width, rotated_height, rotated_depth, DOWN_SCALE_FACTOR);
+    let (out_width, out_height, out_depth, out) =
+        downscale(&rotated, rotated_width, rotated_height, rotated_depth, DOWN_SCALE_FACTOR);
 
-    Ok((scaled_width, scaled_height, scaled_depth, scaled))
+    Ok((out_width, out_height, out_depth, out))
 }
 
 // #[cfg(test)]

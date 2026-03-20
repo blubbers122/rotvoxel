@@ -17,24 +17,43 @@ pub fn rotate<P>(
     rot_x: f64,
     rot_y: f64,
     rot_z: f64,
-    down_scale_factor: usize,
+    _down_scale_factor: usize,
 ) -> (usize, usize, usize, Vec<P>)
 where
     P: Clone,
 {
-    let (sx, cx) = rot_x.to_radians().sin_cos();
-    let (sy, cy) = rot_y.to_radians().sin_cos();
-    let (sz, cz) = rot_z.to_radians().sin_cos();
+    let (sin_x, cos_x) = rot_x.to_radians().sin_cos();
+    let (sin_y, cos_y) = rot_y.to_radians().sin_cos();
+    let (sin_z, cos_z) = rot_z.to_radians().sin_cos();
 
-    // Rotation matrix (Z * Y * X)
-    let rot = |x: f64, y: f64, z: f64| -> (f64, f64, f64) {
-        let (x1, y1, z1) = (x, y * cx - z * sx, y * sx + z * cx); // X
-        let (x2, y2, z2) = (x1 * cy + z1 * sy, y1, z1 * cy - x1 * sy); // Y
-        let (x3, y3, z3) = (x2 * cz - y2 * sz, x2 * sz + y2 * cz, z2); // Z
+    // Center of the source model
+    let cx = width as f64 / 2.0;
+    let cy = height as f64 / 2.0;
+    let cz = depth as f64 / 2.0;
+
+    // Forward rotation matrix R = Rz * Ry * Rx (applied around model center)
+    let rot_fwd = |x: f64, y: f64, z: f64| -> (f64, f64, f64) {
+        // Rx
+        let (x1, y1, z1) = (x, y * cos_x - z * sin_x, y * sin_x + z * cos_x);
+        // Ry
+        let (x2, y2, z2) = (x1 * cos_y + z1 * sin_y, y1, z1 * cos_y - x1 * sin_y);
+        // Rz
+        let (x3, y3, z3) = (x2 * cos_z - y2 * sin_z, x2 * sin_z + y2 * cos_z, z2);
         (x3, y3, z3)
     };
 
-    // --- Compute bounds ---
+    // Inverse rotation matrix R^-1 = Rx^T * Ry^T * Rz^T (transpose = negate sines, reverse order)
+    let rot_inv = |x: f64, y: f64, z: f64| -> (f64, f64, f64) {
+        // Rz^T
+        let (x1, y1, z1) = (x * cos_z + y * sin_z, -x * sin_z + y * cos_z, z);
+        // Ry^T
+        let (x2, y2, z2) = (x1 * cos_y - z1 * sin_y, y1, x1 * sin_y + z1 * cos_y);
+        // Rx^T
+        let (x3, y3, z3) = (x2, y2 * cos_x + z2 * sin_x, -y2 * sin_x + z2 * cos_x);
+        (x3, y3, z3)
+    };
+
+    // --- Compute output bounds by forward-rotating all 8 corners (centered) ---
     let mut min = (f64::INFINITY, f64::INFINITY, f64::INFINITY);
     let mut max = (f64::NEG_INFINITY, f64::NEG_INFINITY, f64::NEG_INFINITY);
 
@@ -48,15 +67,16 @@ where
         (0.0, height as f64, depth as f64),
         (width as f64, height as f64, depth as f64),
     ] {
-        let (x, y, z) = rot(corner.0, corner.1, corner.2);
+        // Rotate around model center
+        let (rx, ry, rz) = rot_fwd(corner.0 - cx, corner.1 - cy, corner.2 - cz);
 
-        min.0 = min.0.min(x);
-        min.1 = min.1.min(y);
-        min.2 = min.2.min(z);
+        min.0 = min.0.min(rx);
+        min.1 = min.1.min(ry);
+        min.2 = min.2.min(rz);
 
-        max.0 = max.0.max(x);
-        max.1 = max.1.max(y);
-        max.2 = max.2.max(z);
+        max.0 = max.0.max(rx);
+        max.1 = max.1.max(ry);
+        max.2 = max.2.max(rz);
     }
 
     let out_w = (max.0 - min.0).ceil() as usize;
@@ -65,26 +85,30 @@ where
 
     let mut out = vec![empty.clone(); out_w * out_h * out_d];
 
-    // --- Inverse mapping ---
+    // --- Inverse mapping: for each output voxel, find the source voxel ---
     for z in 0..out_d {
         for y in 0..out_h {
             for x in 0..out_w {
+                // Output coordinate in rotated space (relative to rotated center)
                 let fx = x as f64 + min.0;
                 let fy = y as f64 + min.1;
                 let fz = z as f64 + min.2;
 
-                // Inverse rotation (transpose of rotation matrix)
-                let (sx, sy, sz) = rot(fx, fy, fz); // approximate inverse if symmetric
+                // Inverse rotate to find source coordinates, then add back center offset
+                let (src_x, src_y, src_z) = rot_inv(fx, fy, fz);
+                let src_x = src_x + cx;
+                let src_y = src_y + cy;
+                let src_z = src_z + cz;
 
-                if sx >= 0.0
-                    && sx < width as f64
-                    && sy >= 0.0
-                    && sy < height as f64
-                    && sz >= 0.0
-                    && sz < depth as f64
+                if src_x >= 0.0
+                    && src_x < width as f64
+                    && src_y >= 0.0
+                    && src_y < height as f64
+                    && src_z >= 0.0
+                    && src_z < depth as f64
                 {
                     let src =
-                        (sz as usize * width * height) + (sy as usize * width) + (sx as usize);
+                        (src_z as usize * width * height) + (src_y as usize * width) + (src_x as usize);
 
                     let dst = (z * out_w * out_h) + (y * out_w) + x;
 

@@ -44,6 +44,7 @@ pub fn scale2x<P>(
     width: usize,
     height: usize,
     depth: usize,
+    empty: &P,
 ) -> (usize, usize, usize, Vec<P>)
 where
     P: Eq + Clone,
@@ -52,35 +53,25 @@ where
     let height2 = height * 2;
     let depth2 = depth * 2;
 
-    let mut scaled = vec![buf[0].clone(); width2 * height2 * depth2];
+    let mut scaled = vec![empty.clone(); width2 * height2 * depth2];
 
-    // Apply the algorithm to the center
     for z in 0..depth {
         for y in 0..height {
             for x in 0..width {
-                let (center, up, left, down, right, forward, back) =
-                    get_neighbor_indices(x, y, z, width, height, depth);
+                let center = &buf[three_to_one(x, y, z, width, height)];
+                let up = if y > 0 { &buf[three_to_one(x, y - 1, z, width, height)] } else { empty };
+                let down = if y < height - 1 { &buf[three_to_one(x, y + 1, z, width, height)] } else { empty };
+                let left = if x > 0 { &buf[three_to_one(x - 1, y, z, width, height)] } else { empty };
+                let right = if x < width - 1 { &buf[three_to_one(x + 1, y, z, width, height)] } else { empty };
+                let forward = if z < depth - 1 { &buf[three_to_one(x, y, z + 1, width, height)] } else { empty };
+                let back = if z > 0 { &buf[three_to_one(x, y, z - 1, width, height)] } else { empty };
+
                 apply_scale2x_block(
                     &mut scaled,
-                    three_to_one(x * 2, y * 2, z * 2, width2, height2), // scaled_y + x * 2,
+                    three_to_one(x * 2, y * 2, z * 2, width2, height2),
                     width2,
                     height2,
-                    (
-                        // Center
-                        &buf[center],
-                        // Up
-                        &buf[up],
-                        // Left
-                        &buf[left],
-                        // Down
-                        &buf[down],
-                        // Right
-                        &buf[right],
-                        // Forward
-                        &buf[forward],
-                        // Back
-                        &buf[back],
-                    ),
+                    (center, up, left, down, right, forward, back),
                 );
             }
         }
