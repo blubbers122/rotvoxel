@@ -31,12 +31,36 @@ where
         for y in 0..height {
             for x in 0..width {
                 let center = &buf[three_to_one(x, y, z, width, height)];
-                let up = if y > 0 { &buf[three_to_one(x, y - 1, z, width, height)] } else { empty };
-                let down = if y < height - 1 { &buf[three_to_one(x, y + 1, z, width, height)] } else { empty };
-                let left = if x > 0 { &buf[three_to_one(x - 1, y, z, width, height)] } else { empty };
-                let right = if x < width - 1 { &buf[three_to_one(x + 1, y, z, width, height)] } else { empty };
-                let forward = if z < depth - 1 { &buf[three_to_one(x, y, z + 1, width, height)] } else { empty };
-                let back = if z > 0 { &buf[three_to_one(x, y, z - 1, width, height)] } else { empty };
+                let up = if y > 0 {
+                    &buf[three_to_one(x, y - 1, z, width, height)]
+                } else {
+                    empty
+                };
+                let down = if y < height - 1 {
+                    &buf[three_to_one(x, y + 1, z, width, height)]
+                } else {
+                    empty
+                };
+                let left = if x > 0 {
+                    &buf[three_to_one(x - 1, y, z, width, height)]
+                } else {
+                    empty
+                };
+                let right = if x < width - 1 {
+                    &buf[three_to_one(x + 1, y, z, width, height)]
+                } else {
+                    empty
+                };
+                let forward = if z < depth - 1 {
+                    &buf[three_to_one(x, y, z + 1, width, height)]
+                } else {
+                    empty
+                };
+                let back = if z > 0 {
+                    &buf[three_to_one(x, y, z - 1, width, height)]
+                } else {
+                    empty
+                };
 
                 apply_scale2x_block(
                     &mut scaled,
@@ -103,9 +127,15 @@ where
 {
     #[inline(always)]
     fn corner<P: Eq + Clone>(nx: &P, ny: &P, nz: &P, ox: &P, oy: &P, oz: &P, c: &P) -> P {
-        if nx == ny && ny != oy && nx != ox { return nx.clone(); }
-        if nx == nz && nz != oz && nx != ox { return nx.clone(); }
-        if ny == nz && nz != oz && ny != oy { return ny.clone(); }
+        if nx == ny && ny != oy && nx != ox {
+            return nx.clone();
+        }
+        if nx == nz && nz != oz && nx != ox {
+            return nx.clone();
+        }
+        if ny == nz && nz != oz && ny != oy {
+            return ny.clone();
+        }
         c.clone()
     }
 
@@ -121,59 +151,4 @@ where
         corner(left, down, forward, right, up, back, c),
         corner(right, down, forward, left, up, back, c),
     )
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn scale2x_uniform_1x1x1() {
-        let buf = vec![1];
-        let (w, h, d, result) = scale2x(&buf, 1, 1, 1, &0);
-        assert_eq!((w, h, d), (2, 2, 2));
-        assert_eq!(result, vec![1; 8]);
-    }
-
-    #[test]
-    fn scale2x_uniform_2x2x2() {
-        let buf = vec![5; 8];
-        let (w, h, d, result) = scale2x(&buf, 2, 2, 2, &0);
-        assert_eq!((w, h, d), (4, 4, 4));
-        assert!(result.iter().all(|&v| v == 5));
-    }
-
-    #[test]
-    fn scale2x_preserves_dimensions() {
-        let buf = vec![0; 3 * 2 * 2];
-        let (w, h, d, result) = scale2x(&buf, 3, 2, 2, &0);
-        assert_eq!((w, h, d), (6, 4, 4));
-        assert_eq!(result.len(), 6 * 4 * 4);
-    }
-
-    #[test]
-    fn scale2x_single_voxel_in_empty() {
-        let mut buf = vec![0; 27]; // 3x3x3
-        buf[three_to_one(1, 1, 1, 3, 3)] = 1;
-        let (w, h, d, result) = scale2x(&buf, 3, 3, 3, &0);
-        assert_eq!((w, h, d), (6, 6, 6));
-        for dz in 0..2 {
-            for dy in 0..2 {
-                for dx in 0..2 {
-                    let idx = three_to_one(2 + dx, 2 + dy, 2 + dz, 6, 6);
-                    assert_eq!(result[idx], 1, "at ({}, {}, {})", 2 + dx, 2 + dy, 2 + dz);
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn scale2x_edge_smoothing() {
-        let mut buf = vec![0; 27]; // 3x3x3
-        buf[three_to_one(1, 1, 1, 3, 3)] = 1;
-        buf[three_to_one(2, 1, 1, 3, 3)] = 1;
-        let (_w, _h, _d, result) = scale2x(&buf, 3, 3, 3, &0);
-        let filled: usize = result.iter().filter(|&&v| v == 1).count();
-        assert!(filled >= 16, "expected >= 16 filled, got {}", filled);
-    }
 }

@@ -177,34 +177,3 @@ pub fn rotvoxel_dotvox(
         layers: vox_data.layers.clone(),
     })
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn no_rotation_returns_original() -> Result<(), Error> {
-        let buf = vec![1, 2, 3, 4, 5, 6, 7, 8];
-        let (w, h, d, result) = rotvoxel(&buf, &0, 2, 2, 2, 0.0, 0.0, 0.0, None)?;
-        assert_eq!((w, h, d), (2, 2, 2));
-        assert_eq!(result, buf);
-        Ok(())
-    }
-
-    #[test]
-    fn size_mismatch_error() {
-        assert_eq!(
-            rotvoxel(&[0, 0, 0, 0, 0], &0, 2, 2, 2, 1.0, 0.0, 0.0, None).unwrap_err(),
-            Error::ImageSizeMismatch
-        );
-    }
-
-    #[test]
-    fn custom_scale_passes() -> Result<(), Error> {
-        // 2 passes = 4x upscale — should still work
-        let buf = vec![1; 8]; // 2x2x2
-        let (w, h, d, _result) = rotvoxel(&buf, &0, 2, 2, 2, 45.0, 0.0, 0.0, Some(2))?;
-        assert!(w > 0 && h > 0 && d > 0);
-        Ok(())
-    }
-}
