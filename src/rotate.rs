@@ -1,5 +1,7 @@
 use std::f64;
 
+use pixel_game_lib::vek::Quaternion;
+
 // Algorithm for rotating the image
 #[multiversion::multiversion(targets("x86_64+sse3", "x86_64+sse3+avx", "x86_64+sse3+avx2"))]
 pub fn rotate<P>(
@@ -7,9 +9,10 @@ pub fn rotate<P>(
     empty_color: &P,
     width: usize,
     height: usize,
-    rotation: f64,
+    depth: usize,
+    rotation: Quaternion<f32>,
     down_scale_factor: usize,
-) -> (usize, usize, Vec<P>)
+) -> (usize, usize, usize, Vec<P>)
 where
     P: Clone,
 {

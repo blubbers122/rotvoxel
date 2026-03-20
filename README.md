@@ -21,13 +21,13 @@ This library allows you to rotate pixel art using the [rotsprite](https://en.wik
 Implement the [`crate::RotSprite`] trait for [`blit::BlitBuffer`], making it easy to get a rotated copy of a blit buffer.
 
 <!-- cargo-rdme end -->
-
+<!-- 
 ![Large](docs/example-large.png?raw=true)
 ![Small](docs/example-small.png?raw=true)
 
 | Left Picture | Middle Picture | Right Picture|
 |-|-|-|
-| Source Image | Rotated 30° using RotSprite | Rotated 30° using naive rotation |
+| Source Image | Rotated 30° using RotSprite | Rotated 30° using naive rotation | -->
 
 ## Demos
 

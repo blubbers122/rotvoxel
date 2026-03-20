@@ -49,12 +49,13 @@ where
     targets("x86_64+sse3", "x86_64+sse3+avx", "x86_64+sse3+avx2"),
     dispatcher = "static"
 )]
-pub fn rotsprite<P>(
+pub fn rotvoxel<P>(
     buf: &[P],
     empty_color: &P,
     width: usize,
+    depth: usize,
     rotation: f64,
-) -> Result<(usize, usize, Vec<P>), Error>
+) -> Result<(usize, usize, usize, Vec<P>), Error>
 where
     P: Eq + Clone,
 {
@@ -71,11 +72,13 @@ where
 
     // Upscale the image using the scale2x algorithm
     // 2x
-    let (scaled_width, scaled_height, scaled) = scale2x(buf, width, height);
+    let (scaled_width, scaled_height, scaled_depth, scaled) = scale2x(buf, width, height, depth);
     // 4x
-    let (scaled_width, scaled_height, scaled) = scale2x(&scaled, scaled_width, scaled_height);
+    let (scaled_width, scaled_height, scaled_depth, scaled) =
+        scale2x(&scaled, scaled_width, scaled_height, scaled_depth);
     // 8x
-    let (scaled_width, scaled_height, scaled) = scale2x(&scaled, scaled_width, scaled_height);
+    let (scaled_width, scaled_height, scaled_depth, scaled) =
+        scale2x(&scaled, scaled_width, scaled_height, scaled_depth);
 
     // Rotate the image
     let rotated = rotate(

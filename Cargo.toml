@@ -1,5 +1,5 @@
 [package]
-name = "rotsprite"
+name = "rotvoxel"
 version = "0.1.4"
 authors = ["Thomas Versteeg <thomasversteeg@gmx.com>"]
 license = "AGPL-3.0-or-later"
@@ -7,8 +7,8 @@ edition = "2021"
 readme = "README.md"
 repository = "https://github.com/tversteeg/rotsprite"
 documentation = "https://docs.rs/rotsprite"
-description = "Rotate sprites using the rotsprite algorithm"
-keywords = ["game", "sprite", "blit", "rotation"]
+description = "Rotate voxel models using the rotsprite algorithm"
+keywords = ["game", "voxel", "blit", "rotation"]
 categories = ["rendering", "game-engines"]
 
 [features]
@@ -42,6 +42,3 @@ harness = false
 [[bench]]
 name = "rotate"
 harness = false
-
-[workspace]
-members = ["run-wasm"]
