@@ -12,33 +12,16 @@ keywords = ["game", "voxel", "blit", "rotation"]
 categories = ["rendering", "game-engines"]
 
 [features]
-default = ["blit"]
-blit = ["dep:blit"]
+
 
 [dependencies]
 multiversion = "0.8.0"
 thiserror = "2.0.0"
+dot_vox = "5.2.0"
 
-# `blit` feature
-blit = { version = "0.8.5", optional = true, default-features = false }
-pixel-game-lib = { version = "0.8.1", default-features = false }
 
 [dev-dependencies]
 image = { version = "0.24.9", default-features = false, features = ["png"] }
-pixel-game-lib = "0.8.1"
 
 [[example]]
-name = "window"
-required-features = ["blit"]
-
-[[bench]]
-name = "rotsprite"
-harness = false
-
-[[bench]]
-name = "scale2x"
-harness = false
-
-[[bench]]
-name = "rotate"
-harness = false
+name = "simple"

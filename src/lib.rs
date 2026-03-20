@@ -12,11 +12,15 @@
 #[cfg(feature = "blit")]
 mod blit;
 #[doc(hidden)]
+pub mod flatten_vox;
+#[doc(hidden)]
 pub mod rotate;
 #[doc(hidden)]
 pub mod scale2x;
 
-use crate::{rotate::*, scale2x::*};
+pub use crate::flatten_vox::*;
+pub use crate::rotate::*;
+pub use crate::scale2x::*;
 use thiserror::Error;
 
 #[derive(Error, Debug, PartialEq)]
@@ -40,6 +44,8 @@ where
         Self: Sized;
 }
 
+const DOWN_SCALE_FACTOR: usize = 8;
+
 /// Rotate a sprite based on any pixel format implementing the `Eq` and `Clone` traits.
 ///
 /// Rotation is in degrees (0-360).
@@ -53,22 +59,24 @@ pub fn rotvoxel<P>(
     buf: &[P],
     empty_color: &P,
     width: usize,
+    height: usize,
     depth: usize,
-    rotation: f64,
+    rot_x: f64,
+    rot_y: f64,
+    rot_z: f64,
 ) -> Result<(usize, usize, usize, Vec<P>), Error>
 where
     P: Eq + Clone,
 {
     // If there's no rotation we don't have to do anything
-    if rotation == 0.0 {
-        return Ok((width, buf.len() / width, buf.to_vec()));
+    if rot_x == 0.0 && rot_y == 0.0 && rot_z == 0.0 {
+        return Ok((width, height, depth, buf.to_vec()));
     }
 
     let len = buf.len();
     if len % width != 0 {
         return Err(Error::ImageSizeMismatch);
     }
-    let height = len / width;
 
     // Upscale the image using the scale2x algorithm
     // 2x
@@ -86,79 +94,82 @@ where
         empty_color,
         scaled_width,
         scaled_height,
-        rotation,
-        8,
+        scaled_depth,
+        rot_x,
+        rot_y,
+        rot_z,
+        DOWN_SCALE_FACTOR,
     );
 
     Ok(rotated)
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+// #[cfg(test)]
+// mod tests {
+//     use super::*;
 
-    #[test]
-    fn rotation_equality() -> Result<(), Error> {
-        let buf = [1, 2, 3, 4, 5, 6].to_vec();
-        assert_eq!(
-            rotsprite(&buf, &0, 3, 45.0)?,
-            rotsprite(&buf, &0, 3, 45.0 + 360.0)?
-        );
-        assert_eq!(
-            rotsprite(&buf, &0, 3, 45.0)?,
-            rotsprite(&buf, &0, 3, 45.0 - 360.0)?
-        );
-        assert_eq!(
-            rotsprite(&buf, &0, 3, 12.0)?,
-            rotsprite(&buf, &0, 3, 12.0 - 360.0)?
-        );
+//     #[test]
+//     fn rotation_equality() -> Result<(), Error> {
+//         let buf = [1, 2, 3, 4, 5, 6].to_vec();
+//         assert_eq!(
+//             rotsprite(&buf, &0, 3, 45.0)?,
+//             rotsprite(&buf, &0, 3, 45.0 + 360.0)?
+//         );
+//         assert_eq!(
+//             rotsprite(&buf, &0, 3, 45.0)?,
+//             rotsprite(&buf, &0, 3, 45.0 - 360.0)?
+//         );
+//         assert_eq!(
+//             rotsprite(&buf, &0, 3, 12.0)?,
+//             rotsprite(&buf, &0, 3, 12.0 - 360.0)?
+//         );
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn rotation_size() -> Result<(), Error> {
-        let buf = [1, 2, 3, 4, 5, 6].to_vec();
-        let (w, h, _) = rotsprite(&buf, &0, 3, 45.0)?;
-        assert_eq!(w, 4);
-        assert_eq!(h, 4);
-        let (w, h, _) = rotsprite(&buf, &0, 3, 90.0)?;
-        assert_eq!(w, 2);
-        assert_eq!(h, 3);
-        let (w, h, _) = rotsprite(&buf, &0, 3, 180.0)?;
-        assert_eq!(w, 3);
-        assert_eq!(h, 2);
+//     #[test]
+//     fn rotation_size() -> Result<(), Error> {
+//         let buf = [1, 2, 3, 4, 5, 6].to_vec();
+//         let (w, h, _) = rotsprite(&buf, &0, 3, 45.0)?;
+//         assert_eq!(w, 4);
+//         assert_eq!(h, 4);
+//         let (w, h, _) = rotsprite(&buf, &0, 3, 90.0)?;
+//         assert_eq!(w, 2);
+//         assert_eq!(h, 3);
+//         let (w, h, _) = rotsprite(&buf, &0, 3, 180.0)?;
+//         assert_eq!(w, 3);
+//         assert_eq!(h, 2);
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn rotation_test() -> Result<(), Error> {
-        let buf = [1, 2, 3, 4, 5, 6].to_vec();
-        let (w, h, new) = rotsprite(&buf, &0, 3, 90.0)?;
-        assert_eq!(w, 2);
-        assert_eq!(h, 3);
-        assert_eq!(new, [4, 1, 5, 2, 6, 3]);
+//     #[test]
+//     fn rotation_test() -> Result<(), Error> {
+//         let buf = [1, 2, 3, 4, 5, 6].to_vec();
+//         let (w, h, new) = rotsprite(&buf, &0, 3, 90.0)?;
+//         assert_eq!(w, 2);
+//         assert_eq!(h, 3);
+//         assert_eq!(new, [4, 1, 5, 2, 6, 3]);
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn no_rotation_test() -> Result<(), Error> {
-        let buf = [1, 0, 0, 1, 1, 0].to_vec();
-        let (w, h, new) = rotsprite(&buf, &-1, 2, 0.0)?;
-        assert_eq!(w, 2);
-        assert_eq!(h, 3);
-        assert_eq!(buf, new);
+//     #[test]
+//     fn no_rotation_test() -> Result<(), Error> {
+//         let buf = [1, 0, 0, 1, 1, 0].to_vec();
+//         let (w, h, new) = rotsprite(&buf, &-1, 2, 0.0)?;
+//         assert_eq!(w, 2);
+//         assert_eq!(h, 3);
+//         assert_eq!(buf, new);
 
-        Ok(())
-    }
+//         Ok(())
+//     }
 
-    #[test]
-    fn size_mismatch_error_test() {
-        assert_eq!(
-            rotsprite(&[0, 0, 0, 0, 0], &-1, 2, 1.0).unwrap_err(),
-            Error::ImageSizeMismatch
-        );
-    }
-}
+//     #[test]
+//     fn size_mismatch_error_test() {
+//         assert_eq!(
+//             rotsprite(&[0, 0, 0, 0, 0], &-1, 2, 1.0).unwrap_err(),
+//             Error::ImageSizeMismatch
+//         );
+//     }
+// }

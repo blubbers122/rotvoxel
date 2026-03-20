@@ -1,8 +1,8 @@
-fn three_to_one(x: usize, y: usize, z: usize, width: usize, height: usize) -> usize {
+pub fn three_to_one(x: usize, y: usize, z: usize, width: usize, height: usize) -> usize {
     x + y * width + z * width * height
 }
 
-fn one_to_three(index: usize, width: usize, height: usize) -> (usize, usize, usize) {
+pub fn one_to_three(index: usize, width: usize, height: usize) -> (usize, usize, usize) {
     let z = index / (width * height);
     let index = index % (width * height);
     let y = index / width;
@@ -28,12 +28,12 @@ fn get_neighbor_indices(
     height: usize,
 ) -> (usize, usize, usize, usize, usize, usize, usize) {
     let center = three_to_one(x, y, z, width, height);
-    let up = three_to_one(x, y - 1, z, width, height);
-    let left = three_to_one(x - 1, y, z, width, height);
+    let up = three_to_one(x, y.saturating_sub(1), z, width, height);
+    let left = three_to_one(x.saturating_sub(1), y, z, width, height);
     let down = three_to_one(x, y + 1, z, width, height);
     let right = three_to_one(x + 1, y, z, width, height);
     let forward = three_to_one(x, y, z + 1, width, height);
-    let back = three_to_one(x, y, z - 1, width, height);
+    let back = three_to_one(x, y, z.saturating_sub(1), width, height);
     (center, up, left, down, right, forward, back)
 }
 
