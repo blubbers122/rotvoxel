@@ -1,49 +1,27 @@
 # rotsprite
 
 [![Build Status](https://github.com/tversteeg/rotsprite/workflows/CI/badge.svg)](https://github.com/tversteeg/rotsprite/actions?workflow=CI)
-[![Crates.io](https://img.shields.io/crates/v/rotsprite.svg)](https://crates.io/crates/rotsprite)
-[![Documentation](https://docs.rs/rotsprite/badge.svg)](https://docs.rs/rotsprite)
-[![License: AGPL-3.0-or-later](https://img.shields.io/crates/l/rotsprite.svg)](#license)
-[![Downloads](https://img.shields.io/crates/d/rotsprite.svg)](#downloads)
+[![Crates.io](https://img.shields.io/crates/v/rotvoxel.svg)](https://crates.io/crates/rotvoxel)
+[![Documentation](https://docs.rs/rotvoxel/badge.svg)](https://docs.rs/rotvoxel)
+[![License: AGPL-3.0-or-later](https://img.shields.io/crates/l/rotvoxel.svg)](#license)
+[![Downloads](https://img.shields.io/crates/d/rotvoxel.svg)](#downloads)
 
-### [Documentation](https://docs.rs/rotsprite/)
+### [Documentation](https://docs.rs/rotvoxel/)
 
 <!-- cargo-rdme start -->
 
-Pixel Art rotation algorithms that works with many types of pixel buffers.
+Voxel Art rotation algorithms that works with many types of voxel buffers.
 
-This library allows you to rotate pixel art using the [rotsprite](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite) algorithm.
+This library allows you to rotate voxel art using the [rotsprite](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite) algorithm.
 
-#### Feature Flags
 
-##### `blit`
-
-Implement the [`crate::RotSprite`] trait for [`blit::BlitBuffer`], making it easy to get a rotated copy of a blit buffer.
-
-<!-- cargo-rdme end -->
-<!-- 
-![Large](docs/example-large.png?raw=true)
-![Small](docs/example-small.png?raw=true)
-
-| Left Picture | Middle Picture | Right Picture|
-|-|-|-|
-| Source Image | Rotated 30° using RotSprite | Rotated 30° using naive rotation | -->
-
-## Demos
-
-### [WASM Demo](https://tversteeg.nl/rotsprite)
-
-Web: https://tversteeg.nl/rotsprite
-
-Uses the `["blit"]` feature flag.
 
 #### Local
 
 ```console
-cargo run --example window
+cargo run --example simple
 ```
 
 #### Credits
 
 [RotSprite algorithm - Xenowhirl](https://en.wikipedia.org/wiki/Pixel-art_scaling_algorithms#RotSprite)<br/>
-[Pixel Art - Redshrike](https://opengameart.org/content/3-form-rpg-boss-harlequin-epicycle)
