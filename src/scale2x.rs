@@ -671,7 +671,18 @@ fn apply_scale2x_block<P>(
     scaled[pos + width * height + width + 1] = block_pixels.7;
 }
 
-// Convert a single voxel to an upscaled 2x2x2 block
+// Convert a single voxel to an upscaled 2x2x2 block using 3D Scale2x.
+//
+// Each output corner has 3 "toward" neighbors and 3 "away" neighbors.
+// We check the standard Scale2x rule independently on each of the 3
+// axis-planes (XY, XZ, YZ). If any plane triggers, we smooth that corner.
+//
+// 2D Scale2x rule for a pair of toward-neighbors (n1, n2) with
+// away-neighbors (o1, o2):
+//   n1 == n2 && n2 != o2 && n1 != o1  →  use n1
+//
+// Since when multiple planes trigger they always agree on the value
+// (the shared toward-neighbor forces equality), we just pick the first match.
 #[inline(always)]
 fn calculate_scale2x_block<P>(
     center: &P,
@@ -685,65 +696,38 @@ fn calculate_scale2x_block<P>(
 where
     P: Eq + Clone,
 {
+    // For each corner, nx/ny/nz are the toward-neighbors, ox/oy/oz are away-neighbors.
+    // Check XY, XZ, YZ planes independently using the Scale2x rule.
+    #[inline(always)]
+    fn corner<P: Eq + Clone>(nx: &P, ny: &P, nz: &P, ox: &P, oy: &P, oz: &P, c: &P) -> P {
+        // XY plane: nx == ny && ny != oy && nx != ox
+        if nx == ny && ny != oy && nx != ox { return nx.clone(); }
+        // XZ plane: nx == nz && nz != oz && nx != ox
+        if nx == nz && nz != oz && nx != ox { return nx.clone(); }
+        // YZ plane: ny == nz && nz != oz && ny != oy
+        if ny == nz && nz != oz && ny != oy { return ny.clone(); }
+        c.clone()
+    }
+
     let c = center;
 
     (
-        // (0,0,0)
-        (if left == up && left != down && up != right {
-            up
-        } else {
-            c
-        })
-        .clone(),
-        // (1,0,0)
-        (if up == right && up != left && right != down {
-            right
-        } else {
-            c
-        })
-        .clone(),
-        // (0,1,0)
-        (if down == left && down != right && left != up {
-            left
-        } else {
-            c
-        })
-        .clone(),
-        // (1,1,0)
-        (if right == down && right != up && down != left {
-            down
-        } else {
-            c
-        })
-        .clone(),
-        // (0,0,1) → +Z
-        (if left == up && left == forward && left != down && up != right && forward != back {
-            forward
-        } else {
-            c
-        })
-        .clone(),
-        // (1,0,1)
-        (if up == right && up == forward && up != left && right != down && forward != back {
-            forward
-        } else {
-            c
-        })
-        .clone(),
-        // (0,1,1)
-        (if down == left && down == forward && down != right && left != up && forward != back {
-            forward
-        } else {
-            c
-        })
-        .clone(),
-        // (1,1,1)
-        (if right == down && right == forward && right != up && down != left && forward != back {
-            forward
-        } else {
-            c
-        })
-        .clone(),
+        // (0,0,0): toward left,up,back — away right,down,forward
+        corner(left, up, back, right, down, forward, c),
+        // (1,0,0): toward right,up,back — away left,down,forward
+        corner(right, up, back, left, down, forward, c),
+        // (0,1,0): toward left,down,back — away right,up,forward
+        corner(left, down, back, right, up, forward, c),
+        // (1,1,0): toward right,down,back — away left,up,forward
+        corner(right, down, back, left, up, forward, c),
+        // (0,0,1): toward left,up,forward — away right,down,back
+        corner(left, up, forward, right, down, back, c),
+        // (1,0,1): toward right,up,forward — away left,down,back
+        corner(right, up, forward, left, down, back, c),
+        // (0,1,1): toward left,down,forward — away right,up,back
+        corner(left, down, forward, right, up, back, c),
+        // (1,1,1): toward right,down,forward — away left,up,back
+        corner(right, down, forward, left, up, back, c),
     )
 }
 
