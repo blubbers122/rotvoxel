@@ -21,9 +21,9 @@ fn main() {
         width,
         height,
         depth,
+        0.0,
+        0.0,
         rotation_angle,
-        0.0,
-        0.0,
     )
     .expect("Could not rotate sprite");
 

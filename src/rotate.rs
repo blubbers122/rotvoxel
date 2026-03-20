@@ -140,9 +140,10 @@ where
     for z in 0..new_depth {
         for y in 0..new_height {
             for x in 0..new_width {
-                let src_x = x * factor;
-                let src_y = y * factor;
-                let src_z = z * factor;
+                // Sample the center of each block, not the corner
+                let src_x = (x * factor + factor / 2).min(width - 1);
+                let src_y = (y * factor + factor / 2).min(height - 1);
+                let src_z = (z * factor + factor / 2).min(depth - 1);
                 let src_idx = src_z * width * height + src_y * width + src_x;
                 let dst_idx = z * new_width * new_height + y * new_width + x;
                 scaled[dst_idx] = buf[src_idx].clone();
