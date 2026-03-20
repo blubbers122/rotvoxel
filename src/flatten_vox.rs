@@ -45,6 +45,10 @@ pub fn flattened_voxels_colors_to_voxels(
     let mut result = Vec::<MyVoxel>::new();
 
     for (i, voxel_color) in flattened_voxels.iter().enumerate() {
+        // skip transparent voxels
+        if voxel_color[3] == 0 {
+            continue;
+        }
         let (x, y, z) = one_to_three(i, width, height);
         result.push(MyVoxel {
             x,

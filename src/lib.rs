@@ -88,8 +88,8 @@ where
     let (scaled_width, scaled_height, scaled_depth, scaled) =
         scale2x(&scaled, scaled_width, scaled_height, scaled_depth);
 
-    // Rotate the image
-    let rotated = rotate(
+    // Rotate the upscaled image
+    let (rotated_width, rotated_height, rotated_depth, rotated) = rotate(
         &scaled,
         empty_color,
         scaled_width,
@@ -101,7 +101,11 @@ where
         DOWN_SCALE_FACTOR,
     );
 
-    Ok(rotated)
+    // Downscale back to original resolution
+    // let (out_width, out_height, out_depth, out) =
+    //     downscale(&rotated, rotated_width, rotated_height, rotated_depth, DOWN_SCALE_FACTOR);
+
+    Ok((scaled_width, scaled_height, scaled_depth, scaled))
 }
 
 // #[cfg(test)]

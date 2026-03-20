@@ -107,17 +107,22 @@ pub fn downscale<P>(
 where
     P: Clone,
 {
-    let new_width = width / factor;
-    let new_height = height / factor;
-    let new_depth = depth / factor;
+    let new_width = (width / factor).max(1);
+    let new_height = (height / factor).max(1);
+    let new_depth = (depth / factor).max(1);
 
-    let mut scaled = vec![buf[0].clone(); new_width * new_height];
+    let mut scaled = vec![buf[0].clone(); new_width * new_height * new_depth];
 
-    for y in 0..new_height {
-        let y_row = y * new_width;
-        let y_row_scaled = y * factor * width;
-        for x in 0..new_width {
-            scaled[y_row + x] = buf[y_row_scaled + x * factor].clone();
+    for z in 0..new_depth {
+        for y in 0..new_height {
+            for x in 0..new_width {
+                let src_x = x * factor;
+                let src_y = y * factor;
+                let src_z = z * factor;
+                let src_idx = src_z * width * height + src_y * width + src_x;
+                let dst_idx = z * new_width * new_height + y * new_width + x;
+                scaled[dst_idx] = buf[src_idx].clone();
+            }
         }
     }
 
